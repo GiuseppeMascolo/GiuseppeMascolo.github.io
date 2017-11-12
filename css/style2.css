@@ -1,0 +1,92 @@
+.lgreen{
+	background-color: #34AD32;
+}
+.lblue{
+	background-color: #50C0FF;
+}
+.lorange{
+	background-color: #E88F0C;
+}
+.lred{
+	background-color: #FF584E;
+}
+
+.white{
+	color: white;
+}
+
+.card{
+	padding: 10px;
+	border: 1px outset grey;
+	border-radius: 5px;
+	margin-bottom: 5px;
+	background-color: white;
+	color: black;
+}
+
+.profile-pic{
+	border-radius: 50%;
+	width: 60%;
+}
+
+.text-centered{
+	text-align: center;
+}
+
+.fun{
+	width: 100%;
+	height: 100%;
+	border-radius: 10%;
+}
+
+.delay3 {
+  animation-delay: 3s;
+}
+
+.delay5 {
+  animation-delay: 5s;
+}
+
+.Tspace{
+	margin-top: 5px;
+}
+
+.card-icons{
+	padding: 10px;
+	border: 1px outset grey;
+	border-top: none; 
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	margin-bottom: 5px;
+	background-color: lightgrey;
+	color: black;
+
+}
+
+.Rspace{
+	margin-right: 5px;
+}
+.card-profile{
+	padding: 10px;
+	border: 1px outset grey;
+	border-bottom: none; 
+	border-top-right-radius: 5px;
+	border-top-left-radius: 5px;
+	background-color: white;
+	background-image: url(../img/seagif.gif);
+	background-repeat: no-repeat;
+	background-size: contain;
+	color: black;
+}
+
+html, body {
+    overflow-x: hidden;
+}
+
+body{
+	background-image: url("../img/color.jpg"); 
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+

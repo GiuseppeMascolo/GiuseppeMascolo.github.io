@@ -1,0 +1,22 @@
+body {
+	font-family: 'Rajdhani', sans-serif;
+}
+
+.social-header {
+	color: white;
+	background-color: #3b5998;
+}
+
+.profile {
+	margin-top: 20px;
+	margin-bottom: 20px;
+	border: 20px solid grey;
+}
+
+.profile-pic {
+	border: 5px solid orange;
+}
+
+ul {
+	list-style: none;
+}

@@ -1,0 +1,30 @@
+h1{
+	text-align: center;
+}
+
+.pic-jordan{
+    display: block;
+    margin: auto;
+    width: 40%;
+}
+
+.par1 {
+    float: left;
+    text-align: center;
+    width: 46%;
+    margin: 2%;
+    background-color: lightblue;
+}
+
+.par2 {
+    float: right;
+    text-align: center;
+    width: 46%;
+    margin: 2%;
+    background-color: lightgreen;
+}
+
+.after-par {
+    clear: both;
+    text-align: center;
+}
