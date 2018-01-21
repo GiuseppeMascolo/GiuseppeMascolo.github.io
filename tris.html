@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>	</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/trisStyle.css">
+</head>
+<body>
+	<audio autoplay>
+	  <source src="Halo.mp3" type="audio/mpeg">
+	</audio>
+	
+	<ul class='board-container' style="display: none;"  id='board-list'>
+		<li class="cell cellBorder"></li>
+		<li class="cell cellBorder"></li>
+		<li class="cell cellRightBorder"></li>
+		<li class="cell cellBorder"></li>
+		<li class="cell cellBorder"></li>
+		<li class="cell cellRightBorder"></li>
+		<li class="cell cellBottomBorder"></li>
+		<li class="cell cellBottomBorder"></li>
+		<li class="cell"></li>
+	</ul>
+
+	<ul class='board-container' id="start-list">
+		<li class="start cellBottomBorder">I start</li>
+		<li class="start">Computer starts</li>
+	</ul>
+	<div class="winner animated pulse infinite" id="win" style="display: none;">GAME OVER!!!!</div>
+	<div class="winner animated pulse infinite" id="draw" style="display: none;">DRAW</div>
+	<div class="centred" id="button" style="display: none;">
+		<button onclick="location.reload();">Start again</button>
+	</div>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script>
+
+		var nCells = 9;
+		var turn = 'x';
+		var turnNumber = 1;
+		var board = [
+			' ',' ',' ',
+			' ',' ',' ',
+			' ',' ',' '
+		];
+		var moves = [];
+		var corners = [0,2,6,8];
+		var oppositeCorners = [8,6,2,0]; 
+		var possibleTris = [
+			[ [0,1,2], [0,3,6], [0,4,8]	],
+			[ [0,1,2], [1,4,7]          ],
+			[ [0,1,2], [2,5,8], [2,4,6] ],
+			[ [3,4,5], [0,3,6],         ],
+			[ [3,4,5], [1,4,7], [0,4,8], [2,4,6] ],
+			[ [3,4,5], [2,5,8]          ],
+			[ [6,7,8], [0,3,6], [2,4,6] ],
+			[ [6,7,8], [1,4,7]          ],
+			[ [6,7,8], [2,5,8], [0,4,8] ],
+		];
+		var win = false;
+
+		$('.start').on("click", function() {
+			$('.start').off("click");
+			document.getElementById('start-list').style.display = 'none';
+			document.getElementById('board-list').style.display = 'flex';
+			document.getElementById('button').style.display = 'block';
+			
+			var startDecision = $('li').index(this);  
+			if(startDecision === 10) { 
+	            //random move in a corner
+	            var randIndex = Math.floor(Math.random()*4);
+	            move = corners[randIndex];
+	            $('.cell').eq(move).html(turn);
+	            update(move);
+	        }
+
+    	});
+
+		$('.cell').on("click", function() {
+
+			var move = $('li').index(this);
+			var validMove = checkValidMove(move);
+
+			if (validMove === true) {
+
+				$(this).html(turn);
+				update(move);
+				move = computerMove(move);
+
+				if(move != -1){
+					$('li').eq(move).html(turn);
+					update(move);
+				}
+				
+				if(win === true){
+					$('.cell').off("click");
+					var pos = lastcheck(possibleTris[move]);
+					var winningPlace = possibleTris[move][pos];
+					//var d = document.getElementById("div1");
+					for(var i = 0; i != 3; ++i){
+						$('.cell').eq(winningPlace[i]).addClass("lred");
+					}
+					document.getElementById('win').style.display = 'flex';
+					//$('li').eq(move).className += " animated pulse infinite";
+					//animated pulse infinite
+				} else if (turnNumber > nCells) {
+					document.getElementById('draw').style.display = 'flex';
+
+				}
+				//var move = emptyCorner();
+				//board[move] = turn;
+				//console.log(move);
+				
+			};
+
+		});
+
+		function computerMove(move) {
+
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // WIN
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    
+		    var winPosition = winMove(board); 
+		    
+		    //winPosition is the position where computer can win or -1 
+		    if(winPosition != -1)  //if there's a win position
+		    {
+		        win = true;
+		        return winPosition;
+		    }
+
+
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // BLOCK
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    
+		    var block = checkTwoInARow(possibleTris[move], board);
+		    
+		    //block is the position where to move for a block
+		    //or -1 if there's nothing to block
+		    if(block != -1){
+		        return block;
+		    }
+		    
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // FORK
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    
+		    var tryFork = -1;        //initialization
+		    //3rd turn separately in order to increase chance to win
+		    if(turnNumber === 3) {
+		        tryFork = forkTurn3(move, board);
+		    }
+		    else {
+		        tryFork = fork(board);
+		    }
+		        
+		    //tryFork is the position where to move for a fork
+		    //or -1 if there's no possible fork
+		    if(tryFork != -1) {
+		        return tryFork;
+		    }
+		     
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // BLOCK FORK - THREATEN
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    
+		    var tryThreatBlockFork = blockForkThreat(board);
+		    
+		    //tryThreatBlockFork is the position where to move to 
+		    //threaten without creating a fork, it is -1 if there's no
+		    //threaten or all threaten creates forks
+		    if(tryThreatBlockFork != -1) {
+		        return tryThreatBlockFork;
+		    }
+
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // CENTRE
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    if(board[4] === ' '){
+		        return 4;
+		    }
+
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // OPPOSITE CORNER
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			var playerTurn = changeTurn(turn)
+			var oppCornMove = OppositeCornerMove(playerTurn, board);
+			//oppCornMove is the position where there is an empty
+    		//corner opposite to a player move or -1 if there is not
+			if(oppCornMove != -1){
+        		return oppCornMove;
+			}
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		    // EMPTY CORNER - SIDE (last possible move)
+		    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			return lastMove(board);
+		};
+
+		function lastcheck(cellPossibleTris) {
+			var N = cellPossibleTris.length;
+		    for(var i = 0; i != N; ++i) {
+		    	var fir = cellPossibleTris[i][0];
+		    	var sec = cellPossibleTris[i][1];
+		    	var thir = cellPossibleTris[i][2];
+		    	if(board[fir] === board[sec] && board[fir] === board[thir]){
+		    		return i;
+		    	}
+		    }
+		    
+		    return -1; 
+		};
+
+		function winMove(specificboard) {
+		    var computerMoveIndex = moves.length - 2;
+		    if(computerMoveIndex >= 0) {
+		        var computerMove = moves[computerMoveIndex];
+		        //computerMove is the last move of the computer
+		        
+		        return checkTwoInARow(possibleTris[computerMove], specificboard);
+		    }
+		    else {
+		        return -1;
+		    }
+		};
+
+		function checkTwoInARow(cellPossibleTris, specificBoard) {
+		    var N = cellPossibleTris.length;
+		    
+		    for(var i = 0; i != N; ++i)       //for each vector in cellPossibleTris
+		    {                                //controll the position of a possible tris      
+		        var possible = checkLine(cellPossibleTris[i], specificBoard);
+		        
+		        if(possible != -1 && specificBoard[possible] === ' '){
+		            return possible;
+		        }
+		    }
+		    
+		    return -1;    
+		};
+
+		function forkTurn3(mov, specificBoard) {
+		    var centre = 4;
+		    if(mov === centre){
+		        //if the player moves in the centre the computer moves in its opposite corner
+		        return OppositeCornerMove(turn, specificBoard);
+		    }
+		    else {
+		        for(var i = 0; i != 4; ++i) {
+		            if(mov === corners[i]) {   //if player in the corner
+
+		                return emptyCorner(specificBoard); //PC in an empty corner
+		            }
+		        }
+		    }
+
+		    return centre;     //otherwise computer in the centre
+		};
+
+		function fork(specificBoard) {
+			for(var i = 0; i != nCells; ++i)              
+		    {
+		        if(specificBoard[i] === ' ') //for each empty element of the board
+		        {
+		            //create a copy of the board
+		            var forkFakeBoard = $.extend( true, {}, specificBoard );    //initialized at every loop  
+		             
+		            var forkFakeMove = i;
+		            forkFakeBoard[forkFakeMove] = turn;           //fake the move in the empty space
+		            
+		            //check now if it creates a fork     
+		            var forknBlockTwo = checkFork(possibleTris[i], forkFakeBoard);
+		            
+		            //if the number of possible tris is 2 return the position
+		            if(forknBlockTwo === 2)
+		                return i;
+		            //otherwise search for another empty element for a fake move
+		        }
+		    }
+		    return -1;    //if no positions create a fork return -1
+
+		};
+
+		function blockForkThreat(specificBoard) {
+			for(var i = 0; i != nCells; ++i)
+		    {
+		        if(specificBoard[i] === ' ')  //for each empty element of the real board
+		        {
+		            //create a copy of the board
+		            var fakeBoard = $.extend( true, {}, specificBoard );        //initialized at every loop  
+		            
+		            var fakemove = i;
+		            fakeBoard[fakemove] = turn;     //fake the move in the empty space
+		            
+		            //check if this move is a threaten
+		            var possibleTwo = checkTwoInARow(possibleTris[i], fakeBoard); 
+		            
+		            //possibleTwo is the position to conclude the tris
+		            if(possibleTwo != -1)
+		            {
+		                var playerTurn = changeTurn(turn);  
+		                                
+		                fakemove = possibleTwo;
+		                fakeBoard[fakemove] = playerTurn;
+		                
+		                //check now if an hypothetical block from the player will lead
+		                //to a fork for him 
+		                
+		                var nBlockTwo = checkFork(possibleTris[possibleTwo], fakeBoard);
+		                
+		                //if the player blocking doesn't have forks, it's a good move
+		                if(nBlockTwo != 2)
+		                    return i;
+		                //otherwise look a the next empty element of the board
+		            }
+		            
+		        }
+		        
+		    }
+		    
+		    return -1;
+		};
+
+		function OppositeCornerMove(specificTurn, specificBoard) {
+    
+		    for(var i = 0; i != 4; ++i)
+		    {
+		        var corner = corners[i];  //index to access a corner each loop
+		        var oppositeCorner = oppositeCorners[i];    //corresponding opposite
+		        if(specificBoard[corner] === specificTurn && specificBoard[oppositeCorner] === ' ')
+		            return oppositeCorner;
+		    }
+		    
+		    return -1;
+
+		};
+
+		function lastMove(specificBoard) {
+			//check corner empty
+		    var corn = emptyCorner(specificBoard);
+		    
+		    if(corn != -1){
+		        return corn;
+		    }
+		    else
+		    {
+		        //check sides empty
+		        var side = emptySide(specificBoard);
+		        return side;
+		    }
+		};
+
+		function update(move) {
+			board[move] = turn;
+			turn = changeTurn(turn);
+			moves.push(move);
+			++turnNumber;
+		};
+
+		function checkValidMove(ans) {
+			var N = moves.length;
+    
+		    for(var i = 0; i != N; ++i)
+		        if(moves[i] == ans)
+		        {
+		           return false;
+		        }
+		        
+		    return true;
+		};
+
+		function checkLine(line, specificBoard) {
+			var first = line[0];            //first element
+		    var second = line[1];           //second element
+		    var third = line[2];            //third element
+		    
+		    if(specificBoard[first] === specificBoard[second]) {
+		        return third;
+		    }
+		    else if(specificBoard[first] === specificBoard[third]) {
+		        return second;
+		    }
+		    else if(specificBoard[second] === specificBoard[third]) {
+		        return first;
+		    }
+		    else {
+		        return -1;
+		    }
+
+		};
+
+		function checkFork(cellPossibleTris, specificBoard) {
+			var N = cellPossibleTris.length;
+		    var nonBlockedOfTwo = 0;      //counts how many not blocked pair there are
+		    
+		    for(var i = 0; i != N; ++i)
+		    {
+		        var possible = checkLine(cellPossibleTris[i], specificBoard);
+		        
+		        //if there are two in a line and the third is empty increase the counter
+		        if(possible != -1 && specificBoard[possible] == ' ')
+		            ++nonBlockedOfTwo;
+		    }
+		    
+		    return nonBlockedOfTwo; 
+		};
+
+		function emptyCorner(specificBoard) {
+			for(var i = 0; i != 4; ++i)
+		    {
+		        var cornerIndex = corners[i];
+		        
+		        if(specificBoard[cornerIndex] === ' '){
+		            return cornerIndex;
+		        }
+		    }
+    		return -1;
+		};
+
+		function emptySide(specificBoard) {
+			var i = 1;
+		    while( i < nCells )
+		    {
+		        if(specificBoard[i] === ' ') {
+		            return i;
+		        }
+		        i = i + 2;        
+		    }
+		            
+		    return -1;
+		};
+
+		function changeTurn(turn) {
+			if(turn === 'x') {
+				nextTurn = 'o';
+			} else { 
+				nextTurn = 'x';
+			}
+			return nextTurn;
+		};
+
+		function checkWinningPosition() {
+
+/*				if(board[0] === turn && board[1] === turn && board[2] === turn) {
+					$('.winner').html(turn + ' is the winner')
+					
+				} else if(board[3] === turn && board[4] === turn && board[5] === turn) {
+					alert('winner');
+					
+				} else if(board[6] === turn && board[7] === turn && board[8] === turn) {
+					alert('winner');
+					
+				} else if(board[0] === turn && board[3] === turn && board[6] === turn) {
+					alert('winner');
+					
+				} else if(board[1] === turn && board[4] === turn && board[7] === turn) {
+					alert('winner');
+					
+				} else if(board[2] === turn && board[5] === turn && board[8] === turn) {
+					alert('winner');
+					
+				} else if(board[0] === turn && board[4] === turn && board[8] === turn) {
+					alert('winner');
+					
+				} else if(board[2] === turn && board[4] === turn && board[6] === turn) {
+					alert('winner');
+					
+				}
+ */
+		};
+
+	</script>
+
+</body>
